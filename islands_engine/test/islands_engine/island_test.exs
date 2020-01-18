@@ -80,4 +80,16 @@ defmodule IslandsEngine.IslandTest do
     {:ok, upper_left} = Coordinate.new(10, 1)
     assert {:error, :invalid_coordinate} = Island.new(:l_shape, upper_left)
   end
+
+  test "Overlap" do
+    {:ok, point_1_1} = Coordinate.new(1, 1)
+    {:ok, point_2_1} = Coordinate.new(2, 1)
+
+    {:ok, l_shape_at_1_1} = Island.new(:l_shape, point_1_1)
+    {:ok, l_shape_at_2_1} = Island.new(:l_shape, point_2_1)
+    {:ok, square_at_2_1} = Island.new(:square, point_2_1)
+
+    assert Island.overlaps?(l_shape_at_1_1, l_shape_at_2_1)
+    refute Island.overlaps?(l_shape_at_1_1, square_at_2_1)
+  end
 end

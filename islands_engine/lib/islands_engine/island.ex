@@ -6,7 +6,7 @@ defmodule IslandsEngine.Island do
   defstruct [:coordinates, hit_coordinates: MapSet.new()]
 
   def new(),
-    do: %Island{coordinates: MapSet.new(), hit_coordinates: MapSet.new()}
+    do: %Island{coordinates: MapSet.new()}
 
   def new(type, %Coordinate{} = upper_left) do
     with [_ | _] = offsets <- offsets(type),
@@ -17,7 +17,8 @@ defmodule IslandsEngine.Island do
     end
   end
 
-  def sandbox do
+  def overlaps?(island1, island2) do
+    not MapSet.disjoint?(island1.coordinates, island2.coordinates)
   end
 
   defp add_coordinates(offsets, upper_left) do
