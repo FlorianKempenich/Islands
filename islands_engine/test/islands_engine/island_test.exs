@@ -33,6 +33,7 @@ defmodule IslandsEngine.IslandTest do
                ])
              )
     end
+
     test "Dot" do
       {:ok, upper_left} = Coordinate.new(2, 1)
       assert {:ok, island} = Island.new(:dot, upper_left)
@@ -40,7 +41,7 @@ defmodule IslandsEngine.IslandTest do
       assert MapSet.equal?(
                island.coordinates,
                MapSet.new([
-                 %Coordinate{col: 2, row: 1},
+                 %Coordinate{col: 2, row: 1}
                ])
              )
     end
@@ -55,7 +56,7 @@ defmodule IslandsEngine.IslandTest do
                  %Coordinate{col: 2, row: 1},
                  %Coordinate{col: 2, row: 2},
                  %Coordinate{col: 2, row: 3},
-                 %Coordinate{col: 3, row: 3},
+                 %Coordinate{col: 3, row: 3}
                ])
              )
     end
@@ -70,7 +71,7 @@ defmodule IslandsEngine.IslandTest do
                  %Coordinate{col: 2, row: 2},
                  %Coordinate{col: 3, row: 2},
                  %Coordinate{col: 3, row: 1},
-                 %Coordinate{col: 4, row: 1},
+                 %Coordinate{col: 4, row: 1}
                ])
              )
     end
@@ -91,5 +92,31 @@ defmodule IslandsEngine.IslandTest do
 
     assert Island.overlaps?(l_shape_at_1_1, l_shape_at_2_1)
     refute Island.overlaps?(l_shape_at_1_1, square_at_2_1)
+  end
+
+  test "Guess" do
+    {:ok, upper_left} = Coordinate.new(2, 1)
+    {:ok, island} = Island.new(:l_shape, upper_left)
+
+    {:ok, hit_guess} = Coordinate.new(2, 2)
+    {:ok, miss_guess} = Coordinate.new(7, 5)
+
+    assert :miss = Island.guess(island, miss_guess)
+    assert {:hit, island_after_guess} = Island.guess(island, hit_guess)
+    assert MapSet.member?(island_after_guess.hit_coordinates, hit_guess)
+  end
+
+  test "Island is marked as FORESTED once all coordinates have been hit" do
+    {:ok, upper_left} = Coordinate.new(2, 1)
+    {:ok, island} = Island.new(:l_shape, upper_left)
+
+    # Hit all coordinates except {3, 3}
+    {:hit, island} = Island.guess(island, %Coordinate{col: 2, row: 1})
+    {:hit, island} = Island.guess(island, %Coordinate{col: 2, row: 2})
+    {:hit, island} = Island.guess(island, %Coordinate{col: 2, row: 3})
+
+    refute Island.forested?(island)
+    {:hit, island} = Island.guess(island, %Coordinate{col: 3, row: 3})
+    assert Island.forested?(island)
   end
 end

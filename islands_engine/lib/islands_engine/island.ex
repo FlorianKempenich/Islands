@@ -21,6 +21,18 @@ defmodule IslandsEngine.Island do
     not MapSet.disjoint?(island1.coordinates, island2.coordinates)
   end
 
+  def guess(%Island{coordinates: coordinates} = island, %Coordinate{} = guess) do
+    if MapSet.member?(coordinates, guess) do
+      {:hit, update_in(island.hit_coordinates, &MapSet.put(&1, guess))}
+    else
+      :miss
+    end
+  end
+
+  def forested?(%Island{coordinates: coords, hit_coordinates: hit_coords}) do
+    MapSet.equal?(coords, hit_coords)
+  end
+
   defp add_coordinates(offsets, upper_left) do
     Enum.reduce_while(offsets, MapSet.new(), fn offset, acc ->
       add_coordinate(acc, upper_left, offset)
