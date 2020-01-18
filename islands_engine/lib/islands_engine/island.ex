@@ -33,6 +33,10 @@ defmodule IslandsEngine.Island do
     MapSet.equal?(coords, hit_coords)
   end
 
+  def types() do
+    [:square, :atoll, :dot, :l_shape, :s_shape]
+  end
+
   defp add_coordinates(offsets, upper_left) do
     Enum.reduce_while(offsets, MapSet.new(), fn offset, acc ->
       add_coordinate(acc, upper_left, offset)
@@ -56,7 +60,7 @@ defmodule IslandsEngine.Island do
   defp offsets(:square),
     do: [{0, 0}, {0, 1}, {1, 0}, {1, 1}]
 
-  defp offsets(:atol),
+  defp offsets(:atoll),
     do: [{0, 0}, {1, 0}, {1, 1}, {0, 2}, {1, 2}]
 
   defp offsets(:dot),

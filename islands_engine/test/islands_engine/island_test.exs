@@ -20,7 +20,7 @@ defmodule IslandsEngine.IslandTest do
 
     test "Atol" do
       {:ok, upper_left} = Coordinate.new(2, 1)
-      assert {:ok, island} = Island.new(:atol, upper_left)
+      assert {:ok, island} = Island.new(:atoll, upper_left)
 
       assert MapSet.equal?(
                island.coordinates,
