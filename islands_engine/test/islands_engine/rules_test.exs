@@ -3,10 +3,10 @@ defmodule IslandsEngine.RulesTest do
   alias IslandsEngine.Rules
 
   describe "State: :initialized =>" do
-    test "Action: :add_player -> Move to :players_set" do
+    test "Action: :add_player2 -> Move to :players_set" do
       rules = %Rules{state: :initialized}
 
-      {:ok, rules} = Rules.check(rules, :add_player)
+      {:ok, rules} = Rules.check(rules, :add_player2)
       assert rules.state == :players_set
     end
 
@@ -95,7 +95,7 @@ defmodule IslandsEngine.RulesTest do
     assert rules.state == :initialized
 
     # Adding the players
-    {:ok, rules} = Rules.check(rules, :add_player)
+    {:ok, rules} = Rules.check(rules, :add_player2)
     assert rules.state == :players_set
 
     # Position & set islands
