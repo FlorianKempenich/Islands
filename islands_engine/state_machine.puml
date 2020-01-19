@@ -1,0 +1,14 @@
+@startuml
+hide empty description
+
+[*] --> initialized
+initialized --> players_set
+players_set --> player1_turn
+player1_turn --> player2_turn
+player2_turn --> player1_turn
+player1_turn -> game_over
+player2_turn -> game_over
+
+game_over --> [*]
+
+@enduml
