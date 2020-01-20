@@ -1,6 +1,6 @@
 defmodule IslandsEngine.Game do
   alias IslandsEngine.{Board, Guesses, Rules, Island, Coordinate}
-  use GenServer
+  use GenServer, restart: :transient
 
   @players [:player1, :player2]
 
