@@ -11,6 +11,12 @@ defmodule IslandsEngine.GameTest do
     [game: game_pid]
   end
 
+  test "Game PID is registered" do
+    {:ok, game_pid} = Game.start_link("DebugPerson")
+    game_name = Game.via_tuple("DebugPerson")
+    assert state(game_pid) == state(game_name)
+  end
+
   test "At initialization", %{game: game} do
     assert %{player1: %{name: @player1_name}} = state(game)
     assert_rules_state(game, :initialized)

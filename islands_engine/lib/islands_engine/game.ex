@@ -8,7 +8,7 @@ defmodule IslandsEngine.Game do
   ## Public interface ##
   ######################
   def start_link(player1_name) when is_binary(player1_name) do
-    GenServer.start_link(__MODULE__, player1_name)
+    GenServer.start_link(__MODULE__, player1_name, name: via_tuple(player1_name))
   end
 
   def add_player2(game, player2_name) when is_binary(player2_name),
@@ -22,6 +22,9 @@ defmodule IslandsEngine.Game do
 
   def guess_coordinate(game, player, col, row) when player in @players,
     do: GenServer.call(game, {:guess_coordinate, player, col, row})
+
+  def via_tuple(player1_name),
+    do: {:via, Registry, {Registry.Game, player1_name}}
 
   #########################
   ## Genserver Callbacks ##
