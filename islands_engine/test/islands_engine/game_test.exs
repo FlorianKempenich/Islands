@@ -17,6 +17,29 @@ defmodule IslandsEngine.GameTest do
     assert state(game_pid) == state(game_name)
   end
 
+  describe "Timeout after delay" do
+    # In tests, timeout is 10ms
+    # See `config/test.exs`
+    @tag :capture_log
+    test "After initialization" do
+      # In tests, timeout is 10ms
+      # See `config/test.exs`
+      Process.flag(:trap_exit, true)
+      {:ok, game_pid} = Game.start_link("DebugPerson")
+
+      assert_receive {:EXIT, ^game_pid, :timeout}, 500
+    end
+
+    @tag :capture_log
+    test "After some action" do
+      Process.flag(:trap_exit, true)
+      {:ok, game_pid} = Game.start_link("DebugPerson")
+
+      Game.add_player2(game_pid, "AnotherPerson")
+      assert_receive {:EXIT, ^game_pid, :timeout}, 500
+    end
+  end
+
   test "At initialization", %{game: game} do
     assert %{player1: %{name: @player1_name}} = state(game)
     assert rules_state(game) == :initialized
@@ -246,5 +269,4 @@ defmodule IslandsEngine.GameTest do
     {:miss, :none, :no_win} = Game.guess_coordinate(game, :player1, 7, 4)
     {:hit, :dot, :win} = Game.guess_coordinate(game, :player2, 1, 4)
   end
-
 end

@@ -1,6 +1,5 @@
 defmodule IslandsEngine.GameSupervisorTest do
-  alias IslandsEngine.{Game, Coordinate, GameSupervisor}
-  import IslandsEngine.Support.{Fixtures, Helpers}
+  alias IslandsEngine.{Game, GameSupervisor}
   use ExUnit.Case
   @moduletag :capture_log
 

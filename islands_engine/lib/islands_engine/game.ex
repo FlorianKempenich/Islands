@@ -3,6 +3,7 @@ defmodule IslandsEngine.Game do
   use GenServer, restart: :transient
 
   @players [:player1, :player2]
+  @timeout Application.fetch_env!(:islands_engine, :game_timeout)
 
   ######################
   ## Public interface ##
@@ -35,7 +36,7 @@ defmodule IslandsEngine.Game do
        player1: %{name: player1_name, board: Board.new(), guesses: Guesses.new()},
        player2: %{name: nil, board: Board.new(), guesses: Guesses.new()},
        rules: Rules.new()
-     }}
+     }, @timeout}
   end
 
   def handle_call({:add_player2, player2_name}, _, state) do
@@ -110,27 +111,27 @@ defmodule IslandsEngine.Game do
     end
   end
 
-  defp update_player2_name(state, player2_name) do
-    put_in(state.player2.name, player2_name)
-  end
+  def handle_info(:timeout, state),
+    do: {:stop, :timeout, state}
 
-  defp update_rules(state, new_rules) do
-    %{state | rules: new_rules}
-  end
+  defp update_player2_name(state, player2_name),
+    do: put_in(state.player2.name, player2_name)
 
-  defp update_board(state, board, player) do
-    put_in(state, [player, :board], board)
-  end
+  defp update_rules(state, new_rules),
+    do: %{state | rules: new_rules}
 
-  defp update_guesses(state, guess_coordinate, hit_or_miss, player) do
-    update_in(state, [player, :guesses], &Guesses.add(&1, hit_or_miss, guess_coordinate))
-  end
+  defp update_board(state, board, player),
+    do: put_in(state, [player, :board], board)
 
-  defp reply_success(state, reply) do
-    {:reply, reply, state}
-  end
+  defp update_guesses(state, guess_coordinate, hit_or_miss, player),
+    do: update_in(state, [player, :guesses], &Guesses.add(&1, hit_or_miss, guess_coordinate))
 
-  defp board(state, player) when player in @players, do: get_in(state, [player, :board])
+  defp reply_success(state, reply),
+    do: {:reply, reply, state, @timeout}
+
+  defp board(state, player) when player in @players,
+    do: get_in(state, [player, :board])
+
   defp opponent(:player1), do: :player2
   defp opponent(:player2), do: :player1
 end
