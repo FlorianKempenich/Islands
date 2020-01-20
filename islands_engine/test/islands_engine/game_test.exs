@@ -29,7 +29,7 @@ defmodule IslandsEngine.GameTest do
       Process.flag(:trap_exit, true)
       {:ok, game_pid} = Game.start_link("DebugPerson")
 
-      assert_receive {:EXIT, ^game_pid, :timeout}, 500
+      assert_receive {:EXIT, ^game_pid, {:shutdown, :timeout}}, 500
     end
 
     @tag :capture_log
@@ -38,7 +38,15 @@ defmodule IslandsEngine.GameTest do
       {:ok, game_pid} = Game.start_link("DebugPerson")
 
       Game.add_player2(game_pid, "AnotherPerson")
-      assert_receive {:EXIT, ^game_pid, :timeout}, 500
+      assert_receive {:EXIT, ^game_pid, {:shutdown, :timeout}}, 500
+    end
+
+    @tag :capture_log
+    test "Clean persistent state" do
+      Process.flag(:trap_exit, true)
+      {:ok, game_pid} = Game.start_link("DebugPerson")
+      assert_receive {:EXIT, ^game_pid, {:shutdown, :timeout}}, 500
+      assert :ets.lookup(@game_ets_table, "DebugPerson") == []
     end
   end
 
