@@ -14,8 +14,8 @@ defmodule IslandsEngine.Game do
   def add_player2(game, player2_name) when is_binary(player2_name),
     do: GenServer.call(game, {:add_player2, player2_name})
 
-  def position_island(game, player, shape, row, col) when player in @players,
-    do: GenServer.call(game, {:position_island, player, shape, row, col})
+  def position_island(game, player, shape, col, row) when player in @players,
+    do: GenServer.call(game, {:position_island, player, shape, col, row})
 
   def set_islands(game, player) when player in @players,
     do: GenServer.call(game, {:set_islands, player})
@@ -43,7 +43,7 @@ defmodule IslandsEngine.Game do
     end
   end
 
-  def handle_call({:position_island, player, shape, row, col}, _, state) do
+  def handle_call({:position_island, player, shape, col, row}, _, state) do
     with {:ok, rules} <- Rules.check(state.rules, {:position_islands, player}),
          {:ok, upper_left} <- Coordinate.new(col, row),
          {:ok, island} <- Island.new(shape, upper_left),

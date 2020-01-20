@@ -36,6 +36,11 @@ defmodule IslandsEngine.GameTest do
 
       %{player1: %{board: player1_board}} = state(game)
       assert Map.has_key?(player1_board, :square)
+
+      assert player1_board
+             |> Map.fetch!(:square)
+             |> Map.fetch!(:coordinates)
+             |> MapSet.member?(%Coordinate{col: 3, row: 7})
     end
 
     test "Invalid shape", %{game: game} do
@@ -50,7 +55,7 @@ defmodule IslandsEngine.GameTest do
     test "Invalid coordinates", %{game: game} do
       mock_rule_state(game, :players_set)
 
-      assert {:error, :invalid_coordinate} = Game.position_island(game, :player2, :l_shape, 9, 7)
+      assert {:error, :invalid_coordinate} = Game.position_island(game, :player2, :l_shape, 7, 9)
 
       %{player1: %{board: player1_board}} = state(game)
       refute Map.has_key?(player1_board, :l_shape)
