@@ -20,6 +20,9 @@ defmodule IslandsEngine.Game do
   def set_islands(game, player) when player in @players,
     do: GenServer.call(game, {:set_islands, player})
 
+  def guess_coordinate(game, player, col, row) when player in @players,
+    do: GenServer.call(game, {:guess_coordinate, player, col, row})
+
   #########################
   ## Genserver Callbacks ##
   #########################
@@ -78,6 +81,32 @@ defmodule IslandsEngine.Game do
     end
   end
 
+  def handle_call({:guess_coordinate, player, col, row}, _, state) do
+    opponent_board = board(state, opponent(player))
+
+    with {:ok, rules} <- Rules.check(state.rules, {:guess_coordinate, player}),
+         {:ok, guess} <- Coordinate.new(col, row),
+         {
+           hit_or_miss,
+           type_hit,
+           win_or_not,
+           opponent_board
+         } <- Board.guess(opponent_board, guess),
+         {:ok, rules} <- Rules.check(rules, {:win_check, win_or_not}) do
+      state
+      |> update_rules(rules)
+      |> update_board(opponent_board, opponent(player))
+      |> update_guesses(guess, hit_or_miss, player)
+      |> reply_success({hit_or_miss, type_hit, win_or_not})
+    else
+      :error ->
+        {:reply, :error, state}
+
+      {:error, :invalid_coordinate} = error ->
+        {:reply, error, state}
+    end
+  end
+
   defp update_player2_name(state, player2_name) do
     put_in(state.player2.name, player2_name)
   end
@@ -90,9 +119,15 @@ defmodule IslandsEngine.Game do
     put_in(state, [player, :board], board)
   end
 
+  defp update_guesses(state, guess_coordinate, hit_or_miss, player) do
+    update_in(state, [player, :guesses], &Guesses.add(&1, hit_or_miss, guess_coordinate))
+  end
+
   defp reply_success(state, reply) do
     {:reply, reply, state}
   end
 
   defp board(state, player) when player in @players, do: get_in(state, [player, :board])
+  defp opponent(:player1), do: :player2
+  defp opponent(:player2), do: :player1
 end
