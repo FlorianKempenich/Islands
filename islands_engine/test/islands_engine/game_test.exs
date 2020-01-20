@@ -5,8 +5,10 @@ defmodule IslandsEngine.GameTest do
 
   @player1_name "Frank"
   @player2_name "Suzie"
+  @game_ets_table Application.fetch_env!(:islands_engine, :game_ets_table_name)
 
   setup do
+    :ets.delete(@game_ets_table, @player1_name)
     {:ok, game_pid} = Game.start_link(@player1_name)
     [game: game_pid]
   end
@@ -38,6 +40,34 @@ defmodule IslandsEngine.GameTest do
       Game.add_player2(game_pid, "AnotherPerson")
       assert_receive {:EXIT, ^game_pid, :timeout}, 500
     end
+  end
+
+  test "Restore State after restart" do
+    Process.flag(:trap_exit, true)
+    {:ok, game_pid} = Game.start_link("RestoreState")
+
+    :ok = Game.add_player2(game_pid, "AnotherPerson")
+    :ok = Game.position_island(game_pid, :player1, :atoll, 1, 1)
+    :ok = Game.position_island(game_pid, :player1, :dot, 1, 4)
+    :ok = Game.position_island(game_pid, :player1, :l_shape, 1, 5)
+    :ok = Game.position_island(game_pid, :player1, :s_shape, 5, 1)
+    :ok = Game.position_island(game_pid, :player1, :square, 5, 5)
+    {:ok, _board} = Game.set_islands(game_pid, :player1)
+
+    state_before_exit = state(game_pid)
+
+    assert %{
+             player2: %{name: "AnotherPerson"},
+             rules: %{player1: :islands_set}
+           } = state_before_exit
+
+    Process.exit(game_pid, :test)
+    assert_receive {:EXIT, ^game_pid, :test}, 500
+    refute Process.alive?(game_pid)
+
+    {:ok, game_pid} = Game.start_link("RestoreState")
+    state_after_restart = state(game_pid)
+    assert state_after_restart == state_before_exit
   end
 
   test "At initialization", %{game: game} do

@@ -4,6 +4,7 @@ defmodule IslandsEngine.Game do
 
   @players [:player1, :player2]
   @timeout Application.fetch_env!(:islands_engine, :game_timeout)
+  @ets_table Application.fetch_env!(:islands_engine, :game_ets_table_name)
 
   ######################
   ## Public interface ##
@@ -31,12 +32,16 @@ defmodule IslandsEngine.Game do
   ## Genserver Callbacks ##
   #########################
   def init(player1_name) do
-    {:ok,
-     %{
-       player1: %{name: player1_name, board: Board.new(), guesses: Guesses.new()},
-       player2: %{name: nil, board: Board.new(), guesses: Guesses.new()},
-       rules: Rules.new()
-     }, @timeout}
+    send(self(), {:set_initial_state, player1_name})
+    {:ok, %{}}
+  end
+
+  defp fresh_state(player1_name) do
+    %{
+      player1: %{name: player1_name, board: Board.new(), guesses: Guesses.new()},
+      player2: %{name: nil, board: Board.new(), guesses: Guesses.new()},
+      rules: Rules.new()
+    }
   end
 
   def handle_call({:add_player2, player2_name}, _, state) do
@@ -111,6 +116,19 @@ defmodule IslandsEngine.Game do
     end
   end
 
+  def handle_info({:set_initial_state, player1_name}, _state) do
+    game_name = player1_name
+
+    state =
+      case :ets.lookup(@ets_table, game_name) do
+        [] -> fresh_state(player1_name)
+        [{^game_name, state}] -> state
+      end
+
+    :ets.insert(@ets_table, {game_name, state})
+    {:noreply, state, @timeout}
+  end
+
   def handle_info(:timeout, state),
     do: {:stop, :timeout, state}
 
@@ -126,8 +144,11 @@ defmodule IslandsEngine.Game do
   defp update_guesses(state, guess_coordinate, hit_or_miss, player),
     do: update_in(state, [player, :guesses], &Guesses.add(&1, hit_or_miss, guess_coordinate))
 
-  defp reply_success(state, reply),
-    do: {:reply, reply, state, @timeout}
+  defp reply_success(state, reply) do
+    game_name = state.player1.name
+    :ets.insert(@ets_table, {game_name, state})
+    {:reply, reply, state, @timeout}
+  end
 
   defp board(state, player) when player in @players,
     do: get_in(state, [player, :board])

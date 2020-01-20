@@ -6,6 +6,8 @@ defmodule IslandsEngine.Application do
 
   use Application
 
+  @game_ets_table Application.fetch_env!(:islands_engine, :game_ets_table_name)
+
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
@@ -13,8 +15,7 @@ defmodule IslandsEngine.Application do
       {GameSupervisor, []}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+    :ets.new(@game_ets_table, [:public, :named_table])
     opts = [strategy: :one_for_one, name: IslandsEngine.Supervisor]
     Supervisor.start_link(children, opts)
   end
