@@ -1,22 +1,23 @@
 defmodule IslandsEngine.BoardTest do
   use ExUnit.Case
   alias IslandsEngine.{Coordinate, Board, Island}
+  import IslandsEngine.Support.{Fixtures, Helpers}
 
   describe "Position island" do
     setup :partially_complete_board
 
-    test "Position non-overlapping island", %{board: board} do
+    test "Position non-overlapping island", %{partially_complete_board: board} do
       square_at_2_2 = island(:square, 2, 2)
       board = Board.position_island(board, :square, square_at_2_2)
       assert Map.get(board, :square) == square_at_2_2
     end
 
-    test "Position overlapping island", %{board: board} do
+    test "Position overlapping island", %{partially_complete_board: board} do
       square_at_3_4 = island(:square, 3, 4)
       assert {:error, :overlapping_island} = Board.position_island(board, :square, square_at_3_4)
     end
 
-    test "Override existing island", %{board: board} do
+    test "Override existing island", %{partially_complete_board: board} do
       s_shape_at_4_3_hit_at_4_4 = %Island{
         island(:s_shape, 4, 3)
         | hit_coordinates: [%Coordinate{col: 4, row: 4}]
@@ -45,12 +46,12 @@ defmodule IslandsEngine.BoardTest do
   describe "Guess" do
     setup :complete_board
 
-    test "Unsuccessful guess", %{board: board} do
+    test "Unsuccessful guess", %{complete_board: board} do
       {:ok, unsuccessful_guess} = Coordinate.new(9, 9)
       assert {:miss, :none, :no_win, board} = Board.guess(board, unsuccessful_guess)
     end
 
-    test "Successful guess, game not yet won", %{board: board} do
+    test "Successful guess, game not yet won", %{complete_board: board} do
       # This guess will hit the :square island
       {:ok, successful_guess} = Coordinate.new(5, 8)
       assert {:hit, :square, :no_win, board_after_guess} = Board.guess(board, successful_guess)
@@ -61,7 +62,7 @@ defmodule IslandsEngine.BoardTest do
              |> MapSet.member?(successful_guess)
     end
 
-    test "Successful guess, game won", %{board: board} do
+    test "Successful guess, game won", %{complete_board: board} do
       {:hit, :atoll, :no_win, board} = Board.guess(board, %Coordinate{col: 3, row: 1})
       {:hit, :atoll, :no_win, board} = Board.guess(board, %Coordinate{col: 3, row: 3})
       {:hit, :atoll, :no_win, board} = Board.guess(board, %Coordinate{col: 4, row: 1})
@@ -88,33 +89,4 @@ defmodule IslandsEngine.BoardTest do
       assert {:hit, :square, :win, board} = Board.guess(board, %Coordinate{col: 6, row: 9})
     end
   end
-
-  defp partially_complete_board(_context) do
-    [
-      board:
-        Board.new()
-        |> Map.put(:l_shape, island(:l_shape, 4, 2))
-        |> Map.put(:s_shape, island(:s_shape, 4, 3))
-    ]
-  end
-
-  defp complete_board(_context) do
-    [
-      board:
-        Board.new()
-        |> Board.position_island(:l_shape, island(:l_shape, 1, 1))
-        |> Board.position_island(:s_shape, island(:s_shape, 5, 1))
-        |> Board.position_island(:atoll, island(:atoll, 3, 1))
-        |> Board.position_island(:dot, island(:dot, 7, 2))
-        |> Board.position_island(:square, island(:square, 5, 8))
-    ]
-  end
-
-  defp island(shape, up_left_col, up_left_row),
-    do:
-      shape
-      |> Island.new(%Coordinate{col: up_left_col, row: up_left_row})
-      |> extract_ok_result()
-
-  defp extract_ok_result({:ok, res}), do: res
 end
