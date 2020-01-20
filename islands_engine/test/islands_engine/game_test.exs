@@ -1,6 +1,6 @@
 defmodule IslandsEngine.GameTest do
   alias IslandsEngine.{Game, Coordinate}
-  import IslandsEngine.Support.Fixtures
+  import IslandsEngine.Support.{Fixtures, Helpers}
   use ExUnit.Case
 
   @player1_name "Frank"
@@ -19,14 +19,14 @@ defmodule IslandsEngine.GameTest do
 
   test "At initialization", %{game: game} do
     assert %{player1: %{name: @player1_name}} = state(game)
-    assert_rules_state(game, :initialized)
+    assert rules_state(game) == :initialized
   end
 
   test "Add Player 2", %{game: game} do
     :ok = Game.add_player2(game, @player2_name)
 
     assert %{player2: %{name: @player2_name}} = state(game)
-    assert_rules_state(game, :players_set)
+    assert rules_state(game) == :players_set
   end
 
   test "Rule error -> return error", %{game: game} do
@@ -120,7 +120,7 @@ defmodule IslandsEngine.GameTest do
       mock_rules_state(game, :player1_turn)
 
       assert {:hit, :dot, :win} = Game.guess_coordinate(game, :player1, 2, 3)
-      assert_rules_state(game, :game_over)
+      assert rules_state(game) == :game_over
       %{player1: %{guesses: player1_guesses}} = state(game)
       assert MapSet.member?(player1_guesses.hits, %Coordinate{col: 2, row: 3})
     end
@@ -131,7 +131,7 @@ defmodule IslandsEngine.GameTest do
       mock_rules_state(game, :player1_turn)
 
       assert {:hit, :square, :no_win} = Game.guess_coordinate(game, :player1, 2, 3)
-      assert_rules_state(game, :player2_turn)
+      assert rules_state(game) == :player2_turn
 
       %{player2: %{board: player2_board_after_guess}} = state(game)
 
@@ -148,7 +148,7 @@ defmodule IslandsEngine.GameTest do
       mock_rules_state(game, :player1_turn)
 
       assert {:miss, :none, :no_win} = Game.guess_coordinate(game, :player1, 2, 3)
-      assert_rules_state(game, :player2_turn)
+      assert rules_state(game) == :player2_turn
       %{player1: %{guesses: player1_guesses}} = state(game)
       assert MapSet.member?(player1_guesses.misses, %Coordinate{col: 2, row: 3})
     end
@@ -156,25 +156,25 @@ defmodule IslandsEngine.GameTest do
     test "invalid coordinates", %{game: game} do
       mock_rules_state(game, :player1_turn)
       assert {:error, :invalid_coordinate} = Game.guess_coordinate(game, :player1, 11, 3)
-      assert_rules_state(game, :player1_turn)
+      assert rules_state(game) == :player1_turn
     end
 
     test "Wrong state", %{game: game} do
       mock_rules_state(game, :initialized)
 
       assert :error = Game.guess_coordinate(game, :player1, 2, 3)
-      assert_rules_state(game, :initialized)
+      assert rules_state(game) == :initialized
     end
   end
 
   test "Complete scenario" do
     # Start Game
     {:ok, game} = Game.start_link("Patrick")
-    assert_rules_state(game, :initialized)
+    assert rules_state(game) == :initialized
 
     # Add 2nd player
     :ok = Game.add_player2(game, "Sarah")
-    assert_rules_state(game, :players_set)
+    assert rules_state(game) == :players_set
 
     # Position Islands & Set islands for player 1
     {:error, :not_all_islands_positioned} = Game.set_islands(game, :player1)
@@ -194,10 +194,10 @@ defmodule IslandsEngine.GameTest do
     {:ok, _board} = Game.set_islands(game, :player2)
 
     # Play Game
-    assert_rules_state(game, :player1_turn)
+    assert rules_state(game) == :player1_turn
     {:miss, :none, :no_win} = Game.guess_coordinate(game, :player1, 9, 8)
 
-    assert_rules_state(game, :player2_turn)
+    assert rules_state(game) == :player2_turn
     {:miss, :none, :no_win} = Game.guess_coordinate(game, :player2, 3, 1)
 
     {:hit, :atoll, :no_win} = Game.guess_coordinate(game, :player1, 3, 1)
@@ -247,23 +247,4 @@ defmodule IslandsEngine.GameTest do
     {:hit, :dot, :win} = Game.guess_coordinate(game, :player2, 1, 4)
   end
 
-  defp state(game), do: :sys.get_state(game)
-
-  defp mock_rules_state(game, mock_rules_state) do
-    :sys.replace_state(game, fn game_state ->
-      put_in(game_state.rules.state, mock_rules_state)
-    end)
-  end
-
-  defp mock_board(game, mock_board, player) do
-    :sys.replace_state(game, fn game_state ->
-      put_in(game_state, [player, :board], mock_board)
-    end)
-  end
-
-  defp assert_rules_state(game, expected_rules_state) do
-    game_state = state(game)
-    rules_state = game_state.rules.state
-    assert expected_rules_state == rules_state
-  end
 end
