@@ -1,6 +1,7 @@
 defmodule IslandsEngine.GameTest do
   alias IslandsEngine.Game
   alias IslandsEngine.Rules
+  alias IslandsEngine.BoardTest
   use ExUnit.Case
 
   @player1_name "Frank"
@@ -28,40 +29,42 @@ defmodule IslandsEngine.GameTest do
     assert :error == Game.add_player2(game, "Try to add player 2 another time")
   end
 
-  test "Position island", %{game: game} do
-    mock_rule_state(game, :players_set)
+  describe "Position island" do
+    test "Valid island", %{game: game} do
+      mock_rule_state(game, :players_set)
 
-    :ok = Game.position_island(game, :player1, :square, 3, 7)
+      :ok = Game.position_island(game, :player1, :square, 3, 7)
 
-    %{player1: %{board: player1_board}} = state(game)
-    assert Map.has_key?(player1_board, :square)
-  end
+      %{player1: %{board: player1_board}} = state(game)
+      assert Map.has_key?(player1_board, :square)
+    end
 
-  test "Position island - Invalid shape", %{game: game} do
-    mock_rule_state(game, :players_set)
+    test "Invalid shape", %{game: game} do
+      mock_rule_state(game, :players_set)
 
-    assert {:error, :invalid_island_type} = Game.position_island(game, :player2, :invalid, 3, 7)
+      assert {:error, :invalid_island_type} = Game.position_island(game, :player2, :invalid, 3, 7)
 
-    %{player1: %{board: player1_board}} = state(game)
-    refute Map.has_key?(player1_board, :invalid)
-  end
+      %{player1: %{board: player1_board}} = state(game)
+      refute Map.has_key?(player1_board, :invalid)
+    end
 
-  test "Position island - Invalid coordinates", %{game: game} do
-    mock_rule_state(game, :players_set)
+    test "Invalid coordinates", %{game: game} do
+      mock_rule_state(game, :players_set)
 
-    assert {:error, :invalid_coordinate} = Game.position_island(game, :player2, :l_shape, 9, 7)
+      assert {:error, :invalid_coordinate} = Game.position_island(game, :player2, :l_shape, 9, 7)
 
-    %{player1: %{board: player1_board}} = state(game)
-    refute Map.has_key?(player1_board, :l_shape)
-  end
+      %{player1: %{board: player1_board}} = state(game)
+      refute Map.has_key?(player1_board, :l_shape)
+    end
 
-  test "Position island - In invalid state", %{game: game} do
-    mock_rule_state(game, :player1_turn)
+    test "In invalid state", %{game: game} do
+      mock_rule_state(game, :player1_turn)
 
-    assert :error = Game.position_island(game, :player1, :square, 3, 7)
+      assert :error = Game.position_island(game, :player1, :square, 3, 7)
 
-    %{player1: %{board: player1_board}} = state(game)
-    refute Map.has_key?(player1_board, :l_shape)
+      %{player1: %{board: player1_board}} = state(game)
+      refute Map.has_key?(player1_board, :l_shape)
+    end
   end
 
   defp state(game), do: :sys.get_state(game)
